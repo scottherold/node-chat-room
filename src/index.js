@@ -56,7 +56,7 @@ io.on('connection', socket => {
 
     // location received
     socket.on('sendLocation', (position, callback) => {
-        socket.broadcast.emit('message', `https://google.com/maps?q=${position.latitude},${position.longitude}`); // <-- send location to all other connected clients
+        socket.broadcast.emit('locationMessage', `https://google.com/maps?q=${position.latitude},${position.longitude}`); // <-- send location to all other connected clients
         callback('Location shared!')
     })
 
