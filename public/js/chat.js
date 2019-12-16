@@ -1,9 +1,5 @@
 // *** Client-side JS *** //
 
-// *** VARIABLES *** //
-const messageForm = document.querySelector('#message-form'); // <-- form with message
-// const messageInput = document.querySelector('input'); // <-- form data
-
 // *** WEBSOCKETING *** //
 // ** Connection ** //
 const socket = io();
@@ -14,9 +10,9 @@ socket.on('message', message => {
     console.log(message);
 });
 
-// ** Event Listening ** //
+// *** Event Listening *** //
 // form submit
-messageForm.addEventListener('submit', e => {
+document.querySelector('#message-form').addEventListener('submit', e => {
     e.preventDefault(); // <-- prevent page refresh
 
     /*
@@ -27,4 +23,21 @@ messageForm.addEventListener('submit', e => {
     const message = e.target.elements.message.value;
     socket.emit('sendMessage', message); // <-- emit data to server
     e.target.reset(); //<-- Reset form
+});
+
+// Send location
+document.querySelector('#send-location').addEventListener('click', () => {
+    
+    // This will check to see if the client's browser is compatible with geolocation services
+    if(!navigator.geolocation) {
+        return alert('Geolocation is not supported by your browser.');
+    }
+
+    // geolocation is asynchronous, but does not support the promise API, so a callback function is necessary
+    navigator.geolocation.getCurrentPosition(position => {
+        socket.emit('sendLocation', {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+        });
+    });
 });

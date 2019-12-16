@@ -45,6 +45,11 @@ io.on('connection', socket => {
         io.emit('message', message);
     });
 
+    // location received
+    socket.on('sendLocation', position => {
+        socket.broadcast.emit('message', `https://google.com/maps?q=${position.latitude},${position.longitude}`); // <-- send location to all other connected clients
+    })
+
     /* 
     / On client disconnect (built-in event through socket.io)
     / must be called as a callback within an io.on() function
@@ -53,8 +58,6 @@ io.on('connection', socket => {
         io.emit('message', 'A user has left!')
     });
 });
-
-// on disconnect
 
 
 // *** SERVER INSTANTIATION *** //
