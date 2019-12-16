@@ -21,7 +21,14 @@ document.querySelector('#message-form').addEventListener('submit', e => {
     / with that form object, you can access the properties by name (in this case 'message')
     */
     const message = e.target.elements.message.value;
-    socket.emit('sendMessage', message); // <-- emit data to server
+    socket.emit('sendMessage', message, error => {
+        // error === profanity detected in message
+        if (error) {
+            return console.log(error);
+        }
+
+        console.log('Message delivered');
+    });
     e.target.reset(); //<-- Reset form
 });
 
@@ -38,6 +45,8 @@ document.querySelector('#send-location').addEventListener('click', () => {
         socket.emit('sendLocation', {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
+        }, message => {
+            console.log(message);
         });
     });
 });

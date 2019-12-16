@@ -8,6 +8,7 @@ const http = require('http') // <-- needed to split websockets from traditional 
 // ** npm Modules ** //
 const express = require('express');
 const socketio = require('socket.io');
+const Filter = require('bad-words');
 
 // *** SERVER CREATION *** //
 const app = express();
@@ -41,13 +42,22 @@ io.on('connection', socket => {
     socket.broadcast.emit('message', 'A new user has joined!');
 
     // sendMessage received
-    socket.on('sendMessage', message => {
+    socket.on('sendMessage', (message, callback) => {
+        const filter = new Filter(); // <-- profanity filter
+
+        // runs profanity filter
+        if (filter.isProfane(message)) {
+            return callback('Profanity is not allowed'); // <-- sends data back to the server
+        }
+        
         io.emit('message', message);
+        callback(); // <-- acknowledgement
     });
 
     // location received
-    socket.on('sendLocation', position => {
+    socket.on('sendLocation', (position, callback) => {
         socket.broadcast.emit('message', `https://google.com/maps?q=${position.latitude},${position.longitude}`); // <-- send location to all other connected clients
+        callback('Location shared!')
     })
 
     /* 
