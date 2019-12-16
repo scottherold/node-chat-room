@@ -25,7 +25,7 @@ const publicDirectoryPath = path.join(__dirname, '../public');
 app.use(express.static(publicDirectoryPath));
 
 // *** VARIABLES *** //
-let count = 0;
+// let count = 0;
 
 // *** SERVER ROUTING *** //
 app.get('', (req, res) => {
@@ -35,18 +35,29 @@ app.get('', (req, res) => {
 // *** SOCKETING *** //
 // on connect
 io.on('connection', socket => {
-    console.log('New WebSocket connection');
+    socket.emit('message', 'Welcome!');
 
-    // Send inital count to client
-    socket.emit('countUpdated', count);
-
-    // Receive click from client, increment count
-    socket.on('increment', () =>{
-        count++;
-        // socket.emit('countUpdated', count); // <-- Single client emit
-        io.emit('countUpdated', count); // <-- broadcasts to all connected clients
-    })
+    // sendMessage received
+    socket.on('sendMessage', message => {
+        io.emit('messageReceived', message);
+    });
 });
+
+// Below is reference code
+// io.on('connection', socket => {
+//     console.log('New WebSocket connection');
+
+//     // Send inital count to client
+//     socket.emit('countUpdated', count);
+
+//     // Receive click from client, increment count
+//     socket.on('increment', () =>{
+//         count++;
+//         // socket.emit('countUpdated', count); // <-- Single client emit
+//         io.emit('countUpdated', count); // <-- broadcasts to all connected clients
+//     })
+// });
+
 
 // *** SERVER INSTANTIATION *** //
 // the HTTP server now listens, leaving the express app open for websocketing
