@@ -9,19 +9,10 @@ const messageForm = document.querySelector('#message-form'); // <-- form with me
 const socket = io();
 
 // ** Socket Listening ** //
-// Welcome Message
+// Receive message from server
 socket.on('message', message => {
     console.log(message);
 });
-
-// Receive message from server
-socket.on('messageReceived', message => {
-    console.log(message);
-});
-
-// socket.on('countUpdated', count => {
-//     console.log('The count has been updated', count);
-// });
 
 // ** Event Listening ** //
 // form submit
@@ -37,8 +28,3 @@ messageForm.addEventListener('submit', e => {
     socket.emit('sendMessage', message); // <-- emit data to server
     e.target.reset(); //<-- Reset form
 });
-
-// document.querySelector('#increment').addEventListener('click', () => {
-//     socket.emit('increment');
-//     console.log('Clicked');
-// });

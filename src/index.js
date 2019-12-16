@@ -24,9 +24,6 @@ const publicDirectoryPath = path.join(__dirname, '../public');
 // ** Settings ** //
 app.use(express.static(publicDirectoryPath));
 
-// *** VARIABLES *** //
-// let count = 0;
-
 // *** SERVER ROUTING *** //
 app.get('', (req, res) => {
     res.render('index.html');
@@ -35,28 +32,29 @@ app.get('', (req, res) => {
 // *** SOCKETING *** //
 // on connect
 io.on('connection', socket => {
-    socket.emit('message', 'Welcome!');
+    socket.emit('message', 'Welcome!'); // <-- welcome message
+
+    /*
+    / When a client connects, this is sent to all other connected clients
+    / This follows the welcome message sent back to the connecting client via socket.emit
+    */
+    socket.broadcast.emit('message', 'A new user has joined!');
 
     // sendMessage received
     socket.on('sendMessage', message => {
-        io.emit('messageReceived', message);
+        io.emit('message', message);
+    });
+
+    /* 
+    / On client disconnect (built-in event through socket.io)
+    / must be called as a callback within an io.on() function
+    */
+    socket.on('disconnect', () => {
+        io.emit('message', 'A user has left!')
     });
 });
 
-// Below is reference code
-// io.on('connection', socket => {
-//     console.log('New WebSocket connection');
-
-//     // Send inital count to client
-//     socket.emit('countUpdated', count);
-
-//     // Receive click from client, increment count
-//     socket.on('increment', () =>{
-//         count++;
-//         // socket.emit('countUpdated', count); // <-- Single client emit
-//         io.emit('countUpdated', count); // <-- broadcasts to all connected clients
-//     })
-// });
+// on disconnect
 
 
 // *** SERVER INSTANTIATION *** //
