@@ -12,6 +12,7 @@ const Filter = require('bad-words');
 
 // ** app modules ** //
 const { generateMessage, generateLocationMessage } = require('./utils/messages');
+const { addUser, getUser, getUsersInRoom, removeUser } = require('./utils/users')
 
 // *** SERVER CREATION *** //
 const app = express();
@@ -38,9 +39,26 @@ app.get('', (req, res) => {
 io.on('connection', socket => {
     console.log('New WebSocket connection');
 
-    // user joins chatroom
-    socket.on('join', ({ username, room }) => {
-        socket.join(room);
+    /* 
+    / user joins chatroom
+    / refactored with user object to provide validated data, 'called options'
+    */
+    socket.on('join', (options, callback) => {
+        /* 
+        / add user to users array stored on the server
+        / Uses object destructing (both in contruction and in variable generation)
+        / -- populates user or error depending on result of function
+        / refactored to use the 'spread operator' (...) with the provided object to populate the matching properties
+        */
+        const { error, user } = addUser({ id: socket.id, ...options })
+
+        // invalid username error
+        if (error) {
+            return callback(error);
+        }
+        
+        // User joins the chatroom
+        socket.join(user.room);
 
         // Welcome message
         socket.emit('message', generateMessage('Welcome!'));
@@ -49,7 +67,9 @@ io.on('connection', socket => {
         / When a client connects, this is sent to all other connected clients
         / This follows the welcome message sent back to the connecting client via socket.emit
         */
-        socket.broadcast.to(room).emit('message', generateMessage(`${username} has joined!`));
+        socket.broadcast.to(user.room).emit('message', generateMessage(`${user.username} has joined!`));
+
+        callback(); // <-- tells the client that the user was successfully able to join
     });
 
     // sendMessage received
@@ -76,10 +96,14 @@ io.on('connection', socket => {
     / must be called as a callback within an io.on() function
     */
     socket.on('disconnect', () => {
-        io.emit('message', generateMessage('A user has left!'))
+        const user = removeUser(socket.id);
+
+        // refactored for room specific message
+        if (user) {
+            io.to(user.room).emit('message', generateMessage(`${user.username} has left!`));
+        }
     });
 });
-
 
 // *** SERVER INSTANTIATION *** //
 // the HTTP server now listens, leaving the express app open for websocketing

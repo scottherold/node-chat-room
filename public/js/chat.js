@@ -51,7 +51,12 @@ socket.on('locationMessage', locationMessage => {
 });
 
 // send join information to server (username, and room)
-socket.emit('join', { username, room })
+socket.emit('join', { username, room }, error => {
+    if (error) {
+        alert(error);
+        location.href = '/'; // <-- browser location used to send user to the root URL
+    }
+});
 
 // *** Event Listening *** //
 // form submit
