@@ -36,14 +36,21 @@ app.get('', (req, res) => {
 // *** SOCKETING *** //
 // on connect
 io.on('connection', socket => {
-    // Welcome message
-    socket.emit('message', generateMessage('Welcome!'));
+    console.log('New WebSocket connection');
 
-    /*
-    / When a client connects, this is sent to all other connected clients
-    / This follows the welcome message sent back to the connecting client via socket.emit
-    */
-    socket.broadcast.emit('message', generateMessage('A new user has joined!'));
+    // user joins chatroom
+    socket.on('join', ({ username, room }) => {
+        socket.join(room);
+
+        // Welcome message
+        socket.emit('message', generateMessage('Welcome!'));
+
+        /*
+        / When a client connects, this is sent to all other connected clients
+        / This follows the welcome message sent back to the connecting client via socket.emit
+        */
+        socket.broadcast.to(room).emit('message', generateMessage(`${username} has joined!`));
+    });
 
     // sendMessage received
     socket.on('sendMessage', (message, callback) => {
@@ -54,7 +61,7 @@ io.on('connection', socket => {
             return callback('Profanity is not allowed'); // <-- sends data back to the server
         }
         
-        io.emit('message', generateMessage(message));
+        io.to('Test').emit('message', generateMessage(message));
         callback(); // <-- acknowledgement
     });
 
@@ -62,7 +69,7 @@ io.on('connection', socket => {
     socket.on('sendLocation', (position, callback) => {
         io.emit('locationMessage', generateLocationMessage(`https://google.com/maps?q=${position.latitude},${position.longitude}`)); // <-- send location to all other connected clients
         callback('Location shared!')
-    })
+    });
 
     /* 
     / On client disconnect (built-in event through socket.io)

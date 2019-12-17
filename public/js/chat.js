@@ -16,6 +16,15 @@ const $messages = document.querySelector('#messages');
 const messageTemplate = document.querySelector('#message-template').innerHTML;
 const locationTemplate = document.querySelector('#location-message-template').innerHTML;
 
+// ** options ** //
+
+/*
+/ Qs library parses the location.search string provided by the browser through HTML5
+/ the option 'ignoreQueryPrefix' removes the question mark at the start of the query string
+/ Relevant object properties destructured from parsed string
+*/
+const { username, room } = Qs.parse(location.search, { ignoreQueryPrefix: true });
+
 // ** Socket Listening ** //
 // Receive message from server
 socket.on('message', message => {
@@ -40,6 +49,9 @@ socket.on('locationMessage', locationMessage => {
     });
     $messages.insertAdjacentHTML('beforeend', html); // <-- inserts the html above as the last html element before this div ends
 });
+
+// send join information to server (username, and room)
+socket.emit('join', { username, room })
 
 // *** Event Listening *** //
 // form submit
