@@ -15,6 +15,7 @@ const $messages = document.querySelector('#messages');
 // ** templates ** //
 const messageTemplate = document.querySelector('#message-template').innerHTML;
 const locationTemplate = document.querySelector('#location-message-template').innerHTML;
+const sidebarTemplate = document.querySelector('#sidebar-template').innerHTML;
 
 // ** options ** //
 
@@ -34,6 +35,7 @@ socket.on('message', message => {
     / uses moment library to format the createdAt time
     */
     const html = Mustache.render(messageTemplate, {
+        username: message.username,
         message: message.text,
         createdAt: moment(message.createdAt).format('h:mm a')
     });
@@ -44,6 +46,7 @@ socket.on('message', message => {
 socket.on('locationMessage', locationMessage => {
     // Grabs HTML from the template; injects server data into HTML
     const html = Mustache.render(locationTemplate, {
+        username: locationMessage.username,
         url: locationMessage.url,
         createdAt: moment(locationMessage.createdAt).format('h:mm a')
     });
@@ -56,6 +59,16 @@ socket.emit('join', { username, room }, error => {
         alert(error);
         location.href = '/'; // <-- browser location used to send user to the root URL
     }
+});
+
+// Receive updated user list from room
+socket.on('roomData', ({ room, users }) => {
+    // Grabs HTML from the template; injects server data into HTML
+    const html = Mustache.render(sidebarTemplate, {
+        room,
+        users
+    });
+    document.querySelector("#sidebar").innerHTML = html; // <-- regenerates HTML on each update from server
 });
 
 // *** Event Listening *** //

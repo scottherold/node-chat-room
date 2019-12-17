@@ -61,19 +61,29 @@ io.on('connection', socket => {
         socket.join(user.room);
 
         // Welcome message
-        socket.emit('message', generateMessage('Welcome!'));
+        socket.emit('message', generateMessage('Admin', 'Welcome!'));
 
         /*
         / When a client connects, this is sent to all other connected clients
         / This follows the welcome message sent back to the connecting client via socket.emit
         */
-        socket.broadcast.to(user.room).emit('message', generateMessage(`${user.username} has joined!`));
+        socket.broadcast.to(user.room).emit('message', generateMessage('Admin', `${user.username} has joined!`));
+
+        /*
+        / When a client connects, send the updated user list
+        / send the client the room data, and the users attached to that room
+        */
+        io.to(user.room).emit('roomData', {
+            room: user.room,
+            users: getUsersInRoom(user.room)
+        });
 
         callback(); // <-- tells the client that the user was successfully able to join
     });
 
     // sendMessage received
     socket.on('sendMessage', (message, callback) => {
+        const user = getUser(socket.id); // <-- grabs id from the socket connection to find user
         const filter = new Filter(); // <-- profanity filter
 
         // runs profanity filter
@@ -81,13 +91,19 @@ io.on('connection', socket => {
             return callback('Profanity is not allowed'); // <-- sends data back to the server
         }
         
-        io.to('Test').emit('message', generateMessage(message));
+        io.to(user.room).emit('message', generateMessage(user.username, message)); // <-- uses room from user 
         callback(); // <-- acknowledgement
     });
 
     // location received
     socket.on('sendLocation', (position, callback) => {
-        io.emit('locationMessage', generateLocationMessage(`https://google.com/maps?q=${position.latitude},${position.longitude}`)); // <-- send location to all other connected clients
+        const user = getUser(socket.id); // <-- grabs id from the socket connection to find user
+
+        /*
+        / send location to all other connected clients within the user's room
+        / uses room from user 
+        */
+        io.to(user.room).emit('locationMessage', generateLocationMessage(user.username, `https://google.com/maps?q=${position.latitude},${position.longitude}`));
         callback('Location shared!')
     });
 
@@ -100,7 +116,16 @@ io.on('connection', socket => {
 
         // refactored for room specific message
         if (user) {
-            io.to(user.room).emit('message', generateMessage(`${user.username} has left!`));
+            io.to(user.room).emit('message', generateMessage('Admin', `${user.username} has left!`));
+
+            /*
+            / When a client disconnects, send the updated user list
+            / send the client the room data, and the users attached to that room
+            */
+            io.to(user.room).emit('roomData', {
+                room: user.room,
+                users: getUsersInRoom(user.room)
+            });
         }
     });
 });

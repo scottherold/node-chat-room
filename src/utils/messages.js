@@ -2,16 +2,18 @@
 
 // *** FUNCTIONS *** //
 // standard message
-const generateMessage = text => {
+const generateMessage = (username, text) => {
     return {
+        username,
         text,
         createdAt: new Date().getTime()
     };
 };
 
 // location message
-const generateLocationMessage = url => {
+const generateLocationMessage = (username, url)  => {
     return {
+        username,
         url,
         createdAt: new Date().getTime()
     };
