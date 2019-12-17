@@ -19,18 +19,24 @@ const locationTemplate = document.querySelector('#location-message-template').in
 // ** Socket Listening ** //
 // Receive message from server
 socket.on('message', message => {
-    // Grabs HTML from the template; injects server data into HTML
+    /* 
+    / Grabs HTML from the template; injects server data into HTMLf
+    / refactored to handle objects sent from server
+    / uses moment library to format the createdAt time
+    */
     const html = Mustache.render(messageTemplate, {
-        message: message
+        message: message.text,
+        createdAt: moment(message.createdAt).format('h:mm a')
     });
     $messages.insertAdjacentHTML('beforeend', html); // <-- inserts the html above as the last html element before this div ends
 });
 
 // Receive location URL from server
-socket.on('locationMessage', url => {
+socket.on('locationMessage', locationMessage => {
     // Grabs HTML from the template; injects server data into HTML
     const html = Mustache.render(locationTemplate, {
-        url: url
+        url: locationMessage.url,
+        createdAt: moment(locationMessage.createdAt).format('h:mm a')
     });
     $messages.insertAdjacentHTML('beforeend', html); // <-- inserts the html above as the last html element before this div ends
 });
@@ -39,6 +45,12 @@ socket.on('locationMessage', url => {
 // form submit
 $messageForm.addEventListener('submit', e => {
     e.preventDefault(); // <-- prevent page refresh
+    const message = e.target.elements.message.value
+
+    // If message is blank, don't send to server
+    if(message === '') {
+        return;
+    }
     
     $messageFormButton.setAttribute('disabled', 'disabled'); // <-- disable the form during transaction
 
@@ -47,7 +59,6 @@ $messageForm.addEventListener('submit', e => {
     / in this case e.target === the form.
     / with that form object, you can access the properties by name (in this case 'message')
     */
-    const message = e.target.elements.message.value;
     socket.emit('sendMessage', message, error => {
         $messageFormButton.removeAttribute('disabled'); // <-- enable the form after the transaction
         $messageFormInput.value = ''; // <-- reset form
