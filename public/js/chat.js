@@ -136,10 +136,8 @@ $messageForm.addEventListener('submit', e => {
 
         // error === profanity detected in message
         if (error) {
-            return console.log(error);
+            alert(error);
         }
-
-        console.log('Message delivered');
     });
 });
 
@@ -159,7 +157,6 @@ $sendLocationButton.addEventListener('click', () => {
             longitude: position.coords.longitude
         }, message => {
             $sendLocationButton.removeAttribute('disabled'); // <-- enable the form after the transaction
-            console.log(message);
         });
     });
 });
