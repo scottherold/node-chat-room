@@ -26,8 +26,46 @@ const sidebarTemplate = document.querySelector('#sidebar-template').innerHTML;
 */
 const { username, room } = Qs.parse(location.search, { ignoreQueryPrefix: true });
 
+/* 
+/ Autoscrolling function
+/ This function will allow autoscroll if the user is scrolled to the bottom of the browser window
+/ If the user scrolls up, the function will not automatically scroll down
+/ If the user returns to the bottom of the scrollable window, they will again be autoscrolled upon receivign a new message
+*/
+const autoscroll = () => {
+    // New message element
+    const $newMessage = $messages.lastElementChild; // <-- grabs last child element of chained parent element
+
+    // Height of the new message
+    const newMessageStyles = getComputedStyle($newMessage); // <-- grabs active CSS for element
+    const newMessageMargin = parseInt(newMessageStyles.marginBottom); // <-- grabs margin-bottom style attribute for the element provided
+    const newMessageHeight = $newMessage.offsetHeight + newMessageMargin; // <-- grabs the actual height of the element, including styles
+
+    // Visible height
+    const visibleHeight = $messages.offsetHeight; // <-- the height of messages (messages element) within the chat area (chat__main element)
+
+    // Height of the messages container
+    const containerHeight = $messages.scrollHeight; // <-- total height of which the area that we can scroll through (messages element)
+
+    // How far have I scrolled?
+    const scrollOffset = $messages.scrollTop + visibleHeight; // <-- provides as a number, the amount of distance that has been scrolled from the top
+
+    /*
+    / Scrolling logic
+    / Takes the containerHeight and subtracts the newMessage (most recent message) height value and compares that to the scrollOffset
+    / If the number is less than or equal to the scrollOffset variable (bigger than screen), then autoscroll
+    */
+    if (containerHeight - newMessageHeight <= scrollOffset) {
+        /*
+        / increases the scrollTop value, which scrolls the page to the bottom automatically
+        / also adds that number to the scrollOffset equation
+        */
+        $messages.scrollTop = $messages.scrollHeight;
+    }
+};
+
 // ** Socket Listening ** //
-// Receive message from server
+// Standard Message Rendering
 socket.on('message', message => {
     /* 
     / Grabs HTML from the template; injects server data into HTMLf
@@ -40,9 +78,10 @@ socket.on('message', message => {
         createdAt: moment(message.createdAt).format('h:mm a')
     });
     $messages.insertAdjacentHTML('beforeend', html); // <-- inserts the html above as the last html element before this div ends
+    autoscroll(); // <-- Runs autoscroll logic after each new message
 });
 
-// Receive location URL from server
+// Location Message Rendering
 socket.on('locationMessage', locationMessage => {
     // Grabs HTML from the template; injects server data into HTML
     const html = Mustache.render(locationTemplate, {
@@ -51,6 +90,7 @@ socket.on('locationMessage', locationMessage => {
         createdAt: moment(locationMessage.createdAt).format('h:mm a')
     });
     $messages.insertAdjacentHTML('beforeend', html); // <-- inserts the html above as the last html element before this div ends
+    autoscroll(); // <-- Runs autoscroll logic after each new message
 });
 
 // send join information to server (username, and room)
