@@ -24,7 +24,7 @@ const sidebarTemplate = document.querySelector('#sidebar-template').innerHTML;
 / the option 'ignoreQueryPrefix' removes the question mark at the start of the query string
 / Relevant object properties destructured from parsed string
 */
-const { username, room } = Qs.parse(location.search, { ignoreQueryPrefix: true });
+const { username, selection, room } = Qs.parse(location.search, { ignoreQueryPrefix: true });
 
 /* 
 / Autoscrolling function
@@ -94,7 +94,7 @@ socket.on('locationMessage', locationMessage => {
 });
 
 // send join information to server (username, and room)
-socket.emit('join', { username, room }, error => {
+socket.emit('join', { username, selection, room }, error => {
     if (error) {
         alert(error);
         location.href = '/'; // <-- browser location used to send user to the root URL

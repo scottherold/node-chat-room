@@ -12,7 +12,8 @@ const Filter = require('bad-words');
 
 // ** app modules ** //
 const { generateMessage, generateLocationMessage } = require('./utils/messages');
-const { addUser, getUser, getUsersInRoom, removeUser } = require('./utils/users')
+const { addUser, getUser, getUsersInRoom, removeUser } = require('./utils/users');
+const { addRoom, removeRoom, getRooms } = require('./utils/rooms');
 
 // *** SERVER CREATION *** //
 const app = express();
@@ -38,19 +39,31 @@ app.get('', (req, res) => {
 // on connect
 io.on('connection', socket => {
     console.log('New WebSocket connection');
+    socket.emit('activeRooms', getRooms());
 
     /* 
     / user joins chatroom
     / refactored with user object to provide validated data, 'called options'
     */
     socket.on('join', (options, callback) => {
+        // Check to see if room was provided/selected
+        if(!options.room && !options.selection) {
+            const error = 'Please select a room, or create a new one!';
+            return callback(error);
+        }
+
+        // Check to see if manual entry is present
+        if(!options.room) {
+            options.room = options.selection;
+        }
+
         /* 
         / add user to users array stored on the server
         / Uses object destructing (both in contruction and in variable generation)
         / -- populates user or error depending on result of function
         / refactored to use the 'spread operator' (...) with the provided object to populate the matching properties
         */
-        const { error, user } = addUser({ id: socket.id, ...options })
+        const { error, user } = addUser({ id: socket.id, ...options });
 
         // invalid username error
         if (error) {
@@ -59,6 +72,10 @@ io.on('connection', socket => {
         
         // User joins the chatroom
         socket.join(user.room);
+
+        // Room added to Room List if unique
+        addRoom(user.room);
+        io.emit('activeRooms', getRooms()); // <-- send list of active rooms
 
         // Welcome message
         socket.emit('message', generateMessage('Admin', 'Welcome!'));
@@ -77,6 +94,7 @@ io.on('connection', socket => {
             room: user.room,
             users: getUsersInRoom(user.room)
         });
+
 
         callback(); // <-- tells the client that the user was successfully able to join
     });
@@ -117,6 +135,12 @@ io.on('connection', socket => {
         // refactored for room specific message
         if (user) {
             io.to(user.room).emit('message', generateMessage('Admin', `${user.username} has left!`));
+            
+            // If last user, remove room from list
+            if(!getUsersInRoom(user.room).length > 0) {
+                removeRoom(user.room);
+                io.emit('activeRooms', getRooms()); // <-- send updated room list
+            }
 
             /*
             / When a client disconnects, send the updated user list
